@@ -16,11 +16,11 @@ class API
 
     public function getDeviceId($device_unique_id)
     {
-        $stmt = $this->db->conn->prepare("SELECT device_id FROM devices WHERE device_unique_id = :device_unique_id");
+        $stmt = $this->db->conn->prepare("SELECT id FROM devices WHERE device_unique_id = :device_unique_id");
         $stmt->bindValue(':device_unique_id', $device_unique_id, SQLITE3_TEXT);
         $result = $stmt->execute();
         $row = $result->fetchArray(SQLITE3_ASSOC);
-        return $row ? $row['device_id'] : null;
+        return $row ? $row['id'] : null;
     }
 
     public function addDevice($device_unique_id)
@@ -74,7 +74,7 @@ class API
 
     public function getDevices()
     {
-        $result = $this->db->conn->query("SELECT device_id, device_unique_id, created_at FROM devices ORDER BY created_at DESC");
+        $result = $this->db->conn->query("SELECT id, device_unique_id, created_at FROM devices ORDER BY created_at DESC");
     
         $data = array();
         $count = 0;
@@ -83,7 +83,10 @@ class API
             $data[] = $row;
             $count++;
         }
-        return  $data;
+        return [
+            'count' => $count,
+            'devices' => $data
+        ];
     }
     
 
@@ -106,7 +109,7 @@ class API
 
     public function getAllSpeedTestResults()
     {
-        $stmt = $this->db->conn->prepare("SELECT dl.id, d.device_unique_id, dl.upload, dl.download, dl.latency, dl.timestamp FROM devicelog dl JOIN devices d ON dl.device_id = d.device_id ORDER BY dl.timestamp ASC");
+        $stmt = $this->db->conn->prepare("SELECT dl.id, d.device_unique_id, dl.upload, dl.download, dl.latency, dl.timestamp FROM devicelog dl JOIN devices d ON dl.device_id = d.id ORDER BY dl.timestamp ASC");
         
         $result = $stmt->execute();
         
@@ -154,7 +157,7 @@ class API
             }
 
             // Then delete the device record
-            $stmtDevice = $this->db->conn->prepare("DELETE FROM devices WHERE device_id = :device_id");
+            $stmtDevice = $this->db->conn->prepare("DELETE FROM devices WHERE id = :device_id");
             $stmtDevice->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
             $resultDevice = $stmtDevice->execute();
 

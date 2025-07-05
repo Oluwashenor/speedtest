@@ -33,7 +33,7 @@ class Database
     {
         // Create devices table
         $sqlDevices = "CREATE TABLE IF NOT EXISTS devices (
-            device_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             device_unique_id TEXT NOT NULL UNIQUE,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )";
@@ -47,7 +47,7 @@ class Database
             download REAL,
             latency REAL,
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (device_id) REFERENCES devices(device_id) ON DELETE CASCADE
+            FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
         )";
         $this->conn->exec($sqlDeviceLog);
         

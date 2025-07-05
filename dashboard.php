@@ -106,20 +106,24 @@ $devices = $api->getDevices(); // Get all registered devices
 <body class="bg-gray-900 text-gray-100 font-sans dark:bg-gray-100 dark:text-gray-900">
   <div class="min-h-screen p-6 flex flex-col items-center">
     <!-- Header -->
+    <div class="relative w-full max-w-6xl mx-auto">
+      <!-- Dark Mode Toggle -->
+      <div class="absolute top-0 right-0 mt-6 mr-6 z-20">
+        <button id="darkModeToggle" class="p-3 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-300">
+          <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d='M12 3v1m0 16v1m9-9h1M3 12H2m15.325-7.757l-.707-.707M6.343 17.657l-.707.707M16.95 12.001l.001.001M7.05 12.001l-.001.001M12 7a5 5 0 110 10 5 5 0 010-10z'></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <div class="text-center mb-10">
       <h1 class="text-5xl font-extrabold text-purple-400 mb-3 animate-fade-in-down dark:text-purple-700">Speed Test Dashboard</h1>
       <p class="text-gray-300 text-lg mb-6 animate-fade-in-up dark:text-gray-700">Real-time internet speed data monitoring</p>
       
-      <!-- Dark Mode Toggle -->
-      <button id="darkModeToggle" class="mb-6 p-3 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-300">
-        <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-        </svg>
-        <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d='M12 3v1m0 16v1m9-9h1M3 12H2m15.325-7.757l-.707-.707M6.343 17.657l-.707.707M16.95 12.001l.001.001M7.05 12.001l-.001.001M12 7a5 5 0 110 10 5 5 0 010-10z'></path>
-        </svg>
-      </button>
-
       <!-- Action Buttons -->
       <div class="flex justify-center space-x-6 animate-fade-in">
         <a href="download_csv.php?download=csv" 
@@ -172,9 +176,9 @@ $devices = $api->getDevices(); // Get all registered devices
               <tbody class="bg-gray-800 divide-y divide-gray-700 dark:bg-gray-100 dark:divide-gray-300">
                 <?php 
                 ob_start(); // Start output buffering for the table body
-                if (!empty($devices)) { // Access the 'devices' key
-                    foreach ($devices as $device) { // Iterate over the 'devices' array
-                        $deviceId = $device['device_id'];
+                if (!empty($devices['devices'])) { // Access the 'devices' key
+                    foreach ($devices['devices'] as $device) { // Iterate over the 'devices' array
+                        $deviceId = $device['id']; // Use 'id' instead of 'device_id'
                         $deviceUniqueId = htmlspecialchars($device['device_unique_id']);
                         $createdAt = date('M d, Y, H:i:s', strtotime($device['created_at']));
                         echo "<tr class='hover:bg-gray-700 transition-colors duration-200 dark:hover:bg-gray-200'>";
@@ -186,13 +190,13 @@ $devices = $api->getDevices(); // Get all registered devices
                         echo "<svg class='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>";
                         echo "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002 2'></path>";
                         echo "</svg>";
-                        echo "View Data";
+                        echo "View";
                         echo "</a>";
                         echo "<button onclick='deleteDevice(" . $deviceId . ")' class='inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition-colors duration-200 shadow-md'>";
                         echo "<svg class='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>";
                         echo "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'></path>";
                         echo "</svg>";
-                        echo "Delete Device";
+                        echo "Delete";
                         echo "</button>";
                         echo "</td>";
                         echo "</tr>";
@@ -215,7 +219,7 @@ $devices = $api->getDevices(); // Get all registered devices
     <div class="mt-10 text-center animate-fade-in-up">
       <div class="inline-block bg-gray-800 rounded-lg px-8 py-5 shadow-xl dark:bg-gray-200">
         <p class="text-gray-300 text-lg dark:text-gray-700">Last Updated: <span class="text-white font-semibold dark:text-gray-900"><?php echo date('M d, Y H:i:s'); ?></span></p>
-        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo count($devices); ?></span></p>
+        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo $devices['count']; ?></span></p>
       </div>
     </div>
 

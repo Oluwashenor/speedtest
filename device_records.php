@@ -13,9 +13,9 @@ if (isset($_GET['device_id'])) {
     $deviceSpeedTestData = $api->getDeviceSpeedTestResults($deviceId);
     
     // Fetch device_unique_id for display
-    $devices = $api->getDevices();
-    foreach ($devices as $device) {
-        if ($device['device_id'] == $deviceId) {
+    $devices_data = $api->getDevices(); // Get all registered devices
+    foreach ($devices_data['devices'] as $device) { // Access the 'devices' key
+        if ($device['id'] == $deviceId) { // Use 'id' instead of 'device_id'
             $deviceUniqueId = htmlspecialchars($device['device_unique_id']);
             break;
         }
@@ -27,6 +27,11 @@ if (isset($_GET['device_id'])) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
   <title>Device Records - <?php echo $deviceUniqueId; ?></title>
   <style>
     /* Custom Scrollbar for Webkit browsers */
@@ -116,16 +121,6 @@ if (isset($_GET['device_id'])) {
       <h1 class="text-5xl font-extrabold text-purple-400 mb-3 animate-fade-in-down dark:text-purple-700">Records for Device: <?php echo $deviceUniqueId; ?></h1>
       <p class="text-gray-300 text-lg mb-6 animate-fade-in-up dark:text-gray-700">Detailed speed test data for this device</p>
       
-      <!-- Dark Mode Toggle -->
-      <button id="darkModeToggle" class="mb-6 p-3 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-300">
-        <svg id="moonIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-        </svg>
-        <svg id="sunIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M3 12H2m15.325-7.757l-.707-.707M6.343 17.657l-.707.707M16.95 12.001l.001.001M7.05 12.001l-.001.001M12 7a5 5 0 110 10 5 5 0 010-10z"></path>
-        </svg>
-      </button>
-      
       <!-- Back Button -->
       <div class="flex justify-center space-x-6 animate-fade-in">
         <a href="dashboard.php" 
@@ -203,29 +198,10 @@ if (isset($_GET['device_id'])) {
   </div>
 
   <script>
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    const moonIcon = document.getElementById('moonIcon');
-    const sunIcon = document.getElementById('sunIcon');
-
     // On page load, check for dark mode preference
     if (localStorage.getItem('darkMode') === 'enabled') {
       document.documentElement.classList.add('dark');
-      moonIcon.classList.remove('hidden');
-      sunIcon.classList.add('hidden');
     }
-
-    darkModeToggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      if (document.documentElement.classList.contains('dark')) {
-        localStorage.setItem('darkMode', 'enabled');
-        moonIcon.classList.remove('hidden');
-        sunIcon.classList.add('hidden');
-      } else {
-        localStorage.setItem('darkMode', 'disabled');
-        moonIcon.classList.add('hidden');
-        sunIcon.classList.remove('hidden');
-      }
-    });
 
     function deleteRecord(recordId, buttonElement) {
       if (confirm('Are you sure you want to delete this record?')) {
