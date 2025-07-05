@@ -34,41 +34,100 @@ class API
         return $result ? $this->db->conn->lastInsertRowID() : false;
     }
 
-    public function logSpeedTestResult($device_unique_id, $upload, $download, $latency)
+    public function logSpeedTestResult($data)
     {
-        $device_id = $this->getDeviceId($device_unique_id);
+        try {
+            // Extract required fields from the data structure
+            $device_unique_id = $data['device_uid'];
+            // Convert bytes per second to Mbps
+            $upload = $data['upload'] / 1000000;
+            $download = $data['download'] / 1000000;
+            $latency = $data['server']['latency'];
+            $ping = $data['ping'];
+            $country = $data['client']['country'];
+            $latitude = $data['client']['lat'];
+            $longitude = $data['client']['lon'];
+            $isp = $data['client']['isp'];
+            $timestamp = $data['timestamp'];
 
-        if (!$device_id) {
-            $device_id = $this->addDevice($device_unique_id);
-            if (!$device_id) {
-                return json_encode([
-                    'success' => false,
-                    'message' => 'Error creating new device: ' . $this->db->conn->lastErrorMsg(),
-                ]);
+            // Validate required fields
+            $required_fields = ['device_unique_id', 'upload', 'download', 'latency', 'ping', 'country', 'latitude', 'longitude', 'isp'];
+            foreach ($required_fields as $field) {
+                if (empty($$field)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => "Missing or empty required field: $field"
+                    ]);
+                    exit;
+                }
             }
-        }
 
-        $stmt = $this->db->conn->prepare("INSERT INTO devicelog (device_id, upload, download, latency, timestamp) VALUES (:device_id, :upload, :download, :latency, :timestamp)");
-        
-        $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
-        $stmt->bindValue(':upload', $upload, SQLITE3_FLOAT);
-        $stmt->bindValue(':download', $download, SQLITE3_FLOAT);
-        $stmt->bindValue(':latency', $latency, SQLITE3_FLOAT);
-        $stmt->bindValue(':timestamp', date('Y-m-d H:i:s'), SQLITE3_TEXT);
-        
-        $result = $stmt->execute();
-        
-        if ($result !== false) {
-            return json_encode([
-                'success' => true,
-                'message' => 'Speed test result logged successfully for device ' . $device_unique_id,
-                'device_id' => $device_id
-            ]);
-        } else {
-            return json_encode([
+            $device_id = $this->getDeviceId($device_unique_id);
+
+            if (!$device_id) {
+                $device_id = $this->addDevice($device_unique_id);
+                if (!$device_id) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error creating new device: ' . $this->db->conn->lastErrorMsg(),
+                    ]);
+                    exit;
+                }
+            }
+
+            // Insert into database
+            $stmt = $this->db->conn->prepare(
+                "INSERT INTO devicelog (
+                    device_id, upload, download, latency, ping, country, latitude, longitude, isp, timestamp
+                ) VALUES (
+                    :device_id, :upload, :download, :latency, :ping, :country, :latitude, :longitude, :isp, :timestamp
+                )");
+            
+            $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
+            $stmt->bindValue(':upload', $upload, SQLITE3_FLOAT);
+            $stmt->bindValue(':download', $download, SQLITE3_FLOAT);
+            $stmt->bindValue(':latency', $latency, SQLITE3_FLOAT);
+            $stmt->bindValue(':ping', $ping, SQLITE3_FLOAT);
+            $stmt->bindValue(':country', $country, SQLITE3_TEXT);
+            $stmt->bindValue(':latitude', $latitude, SQLITE3_FLOAT);
+            $stmt->bindValue(':longitude', $longitude, SQLITE3_FLOAT);
+            $stmt->bindValue(':isp', $isp, SQLITE3_TEXT);
+            $stmt->bindValue(':timestamp', $timestamp, SQLITE3_TEXT);
+            
+            $result = $stmt->execute();
+            
+            if ($result !== false) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Speed test result logged successfully',
+                    'device_id' => $device_id,
+                    'record_id' => $this->db->conn->lastInsertRowID(),
+                    'data' => [
+                        'upload' => $upload,
+                        'download' => $download,
+                        'latency' => $latency,
+                        'ping' => $ping,
+                        'country' => $country,
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
+                        'isp' => $isp,
+                        'timestamp' => $timestamp
+                    ]
+                ]);
+                exit;
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error logging speed test result: ' . $this->db->conn->lastErrorMsg()
+                ]);
+                exit;
+            }
+        } catch (Exception $e) {
+            echo json_encode([
                 'success' => false,
-                'message' => 'Error logging speed test result: ' . $this->db->conn->lastErrorMsg(),
+                'message' => 'Error processing speed test data: ' . $e->getMessage()
             ]);
+            exit;
         }
     }
 

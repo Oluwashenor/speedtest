@@ -106,10 +106,26 @@ $devices = $api->getDevices(); // Get all registered devices
 <body class="bg-gray-900 text-gray-100 font-sans dark:bg-gray-100 dark:text-gray-900">
   <div class="min-h-screen p-6 flex flex-col items-center">
     <!-- Header -->
-    <div class="relative w-full max-w-6xl mx-auto">
-      <!-- Dark Mode Toggle -->
-      <div class="absolute top-0 right-0 mt-6 mr-6 z-20">
-        <button id="darkModeToggle" class="p-3 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-300">
+    <div class="relative w-full max-w-6xl mx-auto flex justify-between items-center">
+      <!-- Left Actions -->
+      <div class="mt-2 ml-6 z-20 flex space-x-3">
+        <!-- Download CSV Button -->
+        <a href="download_csv.php?download=csv" title="Download All Data (CSV)"
+           class="p-3 rounded-full bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </a>
+        <!-- Add New Device Button -->
+        <button id="addDeviceBtn" title="Add New Device" class="p-3 rounded-full bg-purple-600 text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+        </button>
+      </div>
+      <!-- Right Actions (Dark Mode Toggle) -->
+      <div class="mt-2 mr-6 z-20">
+        <button id="darkModeToggle" title="Toggle Dark Mode" class="p-3 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-300">
           <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
@@ -120,33 +136,10 @@ $devices = $api->getDevices(); // Get all registered devices
       </div>
     </div>
 
-    <div class="text-center mb-10">
+    <div class="text-center mb-4">
       <h1 class="text-5xl font-extrabold text-purple-400 mb-3 animate-fade-in-down dark:text-purple-700">Speed Test Dashboard</h1>
       <p class="text-gray-300 text-lg mb-6 animate-fade-in-up dark:text-gray-700">Real-time internet speed data monitoring</p>
       
-      <!-- Action Buttons -->
-      <div class="flex justify-center space-x-6 animate-fade-in">
-        <a href="download_csv.php?download=csv" 
-           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
-          <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          Download All Data (CSV)
-        </a>
-        <a href="speed_chart.php" 
-           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
-          <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 4v16M17 4v16M4 8h4m-4 8h4m-4-4h16m-9-4h9'></path>
-          </svg>
-          View Speed Chart
-        </a>
-        <button id="addDeviceBtn" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
-          <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Add New Device
-        </button>
-      </div>
       
       <!-- Error Message Display -->
       <?php if (isset($_GET['error']) && $_GET['error'] === 'download_failed'): ?>

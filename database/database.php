@@ -46,6 +46,11 @@ class Database
             upload REAL,
             download REAL,
             latency REAL,
+            ping REAL,
+            country TEXT,
+            latitude REAL,
+            longitude REAL,
+            isp TEXT,
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
         )";
