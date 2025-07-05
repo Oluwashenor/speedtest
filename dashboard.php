@@ -2,10 +2,13 @@
 <html>
 
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 require_once __DIR__ . '/services/api.php';
 $api = new API();
 $devices = $api->getDevices(); // Get all registered devices
+// var_dump($devices);
 ?>
 
 <head>
@@ -114,7 +117,7 @@ $devices = $api->getDevices(); // Get all registered devices
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
         </svg>
         <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M3 12H2m15.325-7.757l-.707-.707M6.343 17.657l-.707.707M16.95 12.001l.001.001M7.05 12.001l-.001.001M12 7a5 5 0 110 10 5 5 0 010-10z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d='M12 3v1m0 16v1m9-9h1M3 12H2m15.325-7.757l-.707-.707M6.343 17.657l-.707.707M16.95 12.001l.001.001M7.05 12.001l-.001.001M12 7a5 5 0 110 10 5 5 0 010-10z'></path>
         </svg>
       </button>
 
@@ -169,8 +172,9 @@ $devices = $api->getDevices(); // Get all registered devices
               </thead>
               <tbody class="bg-gray-800 divide-y divide-gray-700 dark:bg-gray-100 dark:divide-gray-300">
                 <?php 
-                if (!empty($devices)) {
-                    foreach ($devices as $device) {
+                ob_start(); // Start output buffering for the table body
+                if (!empty($devices['devices'])) { // Access the 'devices' key
+                    foreach ($devices['devices'] as $device) { // Iterate over the 'devices' array
                         $deviceId = $device['device_id'];
                         $deviceUniqueId = htmlspecialchars($device['device_unique_id']);
                         $createdAt = date('M d, Y, H:i:s', strtotime($device['created_at']));
@@ -178,19 +182,28 @@ $devices = $api->getDevices(); // Get all registered devices
                         echo "<td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-200 dark:text-gray-800'>$deviceId</td>";
                         echo "<td class='px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-semibold dark:text-blue-700'>$deviceUniqueId</td>";
                         echo "<td class='px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-600'>$createdAt</td>";
-                        echo "<td class='px-6 py-4 whitespace-nowrap text-center'>";
-                        echo "<a href='device_records.php?device_id=$deviceId' class='inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-md transition-colors duration-200 shadow-md'>";
+                        echo "<td class='px-6 py-4 whitespace-nowrap text-center text-sm font-medium'>";
+                        echo "<a href='device_records.php?device_id=$deviceId' class='inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-md transition-colors duration-200 shadow-md mb-2 lg:mb-0 lg:mr-2'>";
                         echo "<svg class='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>";
-                        echo "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'></path>";
+                        echo "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002 2'></path>";
                         echo "</svg>";
                         echo "View Data";
                         echo "</a>";
+                        echo "<button onclick='deleteDevice(" . $deviceId . ")' class='inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition-colors duration-200 shadow-md'>";
+                        echo "<svg class='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>";
+                        echo "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'></path>";
+                        echo "</svg>";
+                        echo "Delete Device";
+                        echo "</button>";
                         echo "</td>";
                         echo "</tr>";
                     }
                 } else {
                     echo "<tr><td colspan='4' class='px-6 py-4 text-center text-gray-400 text-base dark:text-gray-600'>No devices registered yet</td></tr>";
                 }
+                $tableBodyContent = ob_get_clean(); // Get the buffered content and clean the buffer
+                file_put_contents('debug_table_body.html', $tableBodyContent); // Write to file
+                echo $tableBodyContent; // Output the content to the browser
                 ?>
               </tbody>
             </table>
@@ -203,7 +216,7 @@ $devices = $api->getDevices(); // Get all registered devices
     <div class="mt-10 text-center animate-fade-in-up">
       <div class="inline-block bg-gray-800 rounded-lg px-8 py-5 shadow-xl dark:bg-gray-200">
         <p class="text-gray-300 text-lg dark:text-gray-700">Last Updated: <span class="text-white font-semibold dark:text-gray-900"><?php echo date('M d, Y H:i:s'); ?></span></p>
-        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo count($devices); ?></span></p>
+        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo $devices['count']; ?></span></p>
       </div>
     </div>
 
@@ -334,6 +347,31 @@ $devices = $api->getDevices(); // Get all registered devices
         .catch(error => {
           console.error('Error:', error);
           alert('An error occurred while deleting the record.');
+        });
+      }
+    }
+
+    function deleteDevice(deviceId) {
+      if (confirm('Are you sure you want to delete this device and ALL its associated speed test records? This action cannot be undone.')) {
+        fetch('services/api.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'action=deleteDevice&device_id=' + deviceId
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            location.reload(); // Reload page to reflect changes
+          } else {
+            alert('Failed to delete device: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while deleting the device.');
         });
       }
     }

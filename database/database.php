@@ -2,12 +2,14 @@
 
 class Database
 {
+    public $database; // SQLite database file
+    public $conn;
+
     public function __construct()
     {
+        $this->database = __DIR__ . "/speedtest.db"; // Set the database path relative to the database.php file
         $this->databaseConnection();
     }
-    public $database = "speedtest.db"; // SQLite database file
-    public $conn;
 
     public function databaseConnection()
     {
