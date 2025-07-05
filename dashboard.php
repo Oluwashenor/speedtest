@@ -8,7 +8,6 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/services/api.php';
 $api = new API();
 $devices = $api->getDevices(); // Get all registered devices
-// var_dump($devices);
 ?>
 
 <head>
@@ -173,8 +172,8 @@ $devices = $api->getDevices(); // Get all registered devices
               <tbody class="bg-gray-800 divide-y divide-gray-700 dark:bg-gray-100 dark:divide-gray-300">
                 <?php 
                 ob_start(); // Start output buffering for the table body
-                if (!empty($devices['devices'])) { // Access the 'devices' key
-                    foreach ($devices['devices'] as $device) { // Iterate over the 'devices' array
+                if (!empty($devices)) { // Access the 'devices' key
+                    foreach ($devices as $device) { // Iterate over the 'devices' array
                         $deviceId = $device['device_id'];
                         $deviceUniqueId = htmlspecialchars($device['device_unique_id']);
                         $createdAt = date('M d, Y, H:i:s', strtotime($device['created_at']));
@@ -216,7 +215,7 @@ $devices = $api->getDevices(); // Get all registered devices
     <div class="mt-10 text-center animate-fade-in-up">
       <div class="inline-block bg-gray-800 rounded-lg px-8 py-5 shadow-xl dark:bg-gray-200">
         <p class="text-gray-300 text-lg dark:text-gray-700">Last Updated: <span class="text-white font-semibold dark:text-gray-900"><?php echo date('M d, Y H:i:s'); ?></span></p>
-        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo $devices['count']; ?></span></p>
+        <p class="text-gray-300 text-lg mt-2 dark:text-gray-700">Total Devices: <span class="text-white font-semibold dark:text-gray-900"><?php echo count($devices); ?></span></p>
       </div>
     </div>
 

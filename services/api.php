@@ -83,13 +83,7 @@ class API
             $data[] = $row;
             $count++;
         }
-    
-        var_dump($data);
-    
-        return [
-            'count' => $count,
-            'devices' => $data
-        ];
+        return  $data;
     }
     
 
