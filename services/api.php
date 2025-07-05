@@ -1,0 +1,201 @@
+<?php
+ob_clean(); // Clean any existing output buffers
+ob_end_clean(); // End any active output buffers
+
+require_once __DIR__ . "/../database/database.php";
+
+class API
+{
+
+    public $db;
+
+    public function __construct()
+    {
+        $this->db = new Database();
+        $this->handlePostRequest(); // Handle POST requests when API is instantiated
+    }
+
+    public function getDeviceId($device_unique_id)
+    {
+        $stmt = $this->db->conn->prepare("SELECT device_id FROM devices WHERE device_unique_id = :device_unique_id");
+        $stmt->bindValue(':device_unique_id', $device_unique_id, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        $row = $result->fetchArray(SQLITE3_ASSOC);
+        return $row ? $row['device_id'] : null;
+    }
+
+    public function addDevice($device_unique_id)
+    {
+        $stmt = $this->db->conn->prepare("INSERT INTO devices (device_unique_id) VALUES (:device_unique_id)");
+        $stmt->bindValue(':device_unique_id', $device_unique_id, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return $result ? $this->db->conn->lastInsertRowID() : false;
+    }
+
+    public function logSpeedTestResult($device_unique_id, $upload, $download, $latency)
+    {
+        $device_id = $this->getDeviceId($device_unique_id);
+
+        if (!$device_id) {
+            $device_id = $this->addDevice($device_unique_id);
+            if (!$device_id) {
+                return json_encode([
+                    'success' => false,
+                    'message' => 'Error creating new device: ' . $this->db->conn->lastErrorMsg(),
+                ]);
+            }
+        }
+
+        $stmt = $this->db->conn->prepare("INSERT INTO devicelog (device_id, upload, download, latency, timestamp) VALUES (:device_id, :upload, :download, :latency, :timestamp)");
+        
+        $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
+        $stmt->bindValue(':upload', $upload, SQLITE3_FLOAT);
+        $stmt->bindValue(':download', $download, SQLITE3_FLOAT);
+        $stmt->bindValue(':latency', $latency, SQLITE3_FLOAT);
+        $stmt->bindValue(':timestamp', date('Y-m-d H:i:s'), SQLITE3_TEXT);
+        
+        $result = $stmt->execute();
+        
+        if ($result !== false) {
+            return json_encode([
+                'success' => true,
+                'message' => 'Speed test result logged successfully for device ' . $device_unique_id,
+                'device_id' => $device_id
+            ]);
+        } else {
+            return json_encode([
+                'success' => false,
+                'message' => 'Error logging speed test result: ' . $this->db->conn->lastErrorMsg(),
+            ]);
+        }
+    }
+
+    public function getDevices()
+    {
+        $stmt = $this->db->conn->prepare("SELECT device_id, device_unique_id, created_at FROM devices ORDER BY created_at DESC");
+        $result = $stmt->execute();
+        
+        $data = array();
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    public function getDeviceSpeedTestResults($device_id, $limit = 50)
+    {
+        $stmt = $this->db->conn->prepare("SELECT id, upload, download, latency, timestamp FROM devicelog WHERE device_id = :device_id ORDER BY timestamp DESC LIMIT :limit");
+        $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
+        $stmt->bindValue(':limit', $limit, SQLITE3_INTEGER);
+        
+        $result = $stmt->execute();
+        
+        $data = array();
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    public function getAllSpeedTestResults()
+    {
+        $stmt = $this->db->conn->prepare("SELECT dl.id, d.device_unique_id, dl.upload, dl.download, dl.latency, dl.timestamp FROM devicelog dl JOIN devices d ON dl.device_id = d.device_id ORDER BY dl.timestamp ASC");
+        
+        $result = $stmt->execute();
+        
+        $data = array();
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    public function deleteSpeedTestRecord($id)
+    {
+        $stmt = $this->db->conn->prepare("DELETE FROM devicelog WHERE id = :id");
+        $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        
+        if ($result !== false) {
+            return json_encode([
+                'success' => true,
+                'message' => 'Record deleted successfully',
+            ]);
+        } else {
+            return json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $this->db->conn->lastErrorMsg(),
+            ]);
+        }
+    }
+
+    // Handle POST requests for actions like deleting records
+    public function handlePostRequest() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (isset($_POST['action'])) {
+                $action = $_POST['action'];
+                switch ($action) {
+                    case 'deleteRecord':
+                    if (isset($_POST['id'])) {
+                        echo $this->deleteSpeedTestRecord($id);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Record ID not provided.']);
+                    }
+                    break;
+                case 'addDevice':
+                    if (isset($_POST['device_unique_id'])) {
+                        $device_unique_id = $_POST['device_unique_id'];
+                        $result = $this->addDevice($device_unique_id);
+                        if ($result !== false) {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success' => true,
+                                'message' => 'Device "' . htmlspecialchars($device_unique_id) . '" added successfully!',
+                                'device_id' => $result
+                            ]);
+                            die(); // Terminate script after sending JSON
+                        } else {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success' => false,
+                                'message' => 'Error adding device: ' . $this->db->conn->lastErrorMsg(),
+                            ]);
+                            die(); // Terminate script after sending JSON
+                        }
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Device Unique ID not provided.']);
+                    }
+                    break;
+                default:
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'Unknown action.']);
+                    die(); // Terminate script after sending JSON
+                    break;
+                }
+            }
+        }
+    }
+    
+    public function getTotalRecords()
+    {
+        $result = $this->db->conn->querySingle("SELECT COUNT(*) as count FROM devicelog");
+        return $result ? intval($result) : 0;
+    }
+
+    public function deleteAllRecords()
+    {
+        $resultDevicelog = $this->db->conn->exec("DELETE FROM devicelog");
+        $resultDevices = $this->db->conn->exec("DELETE FROM devices");
+        
+        $this->db->conn->exec("DELETE FROM sqlite_sequence WHERE name='devicelog'");
+        $this->db->conn->exec("DELETE FROM sqlite_sequence WHERE name='devices'");
+
+        return $resultDevicelog !== false && $resultDevices !== false;
+    }
+}
