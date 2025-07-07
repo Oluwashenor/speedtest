@@ -151,7 +151,7 @@ class API
 
     public function getDeviceSpeedTestResults($device_id, $limit = 50)
     {
-        $stmt = $this->db->conn->prepare("SELECT id, upload, download, latency, timestamp FROM devicelog WHERE device_id = :device_id ORDER BY timestamp DESC LIMIT :limit");
+        $stmt = $this->db->conn->prepare("SELECT id, upload, download, latency, timestamp, landmark FROM devicelog WHERE device_id = :device_id ORDER BY timestamp DESC LIMIT :limit");
         $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
         $stmt->bindValue(':limit', $limit, SQLITE3_INTEGER);
         
@@ -198,6 +198,45 @@ class API
                 'message' => 'Error: ' . $this->db->conn->lastErrorMsg(),
             ]);
         }
+    }
+
+    public function updateSpeedTestRecord($id, $landmark)
+    {
+        $stmt = $this->db->conn->prepare(
+            "UPDATE devicelog 
+            SET landmark = :landmark 
+            WHERE id = :id"
+        );
+        $stmt->bindValue(':landmark', $landmark, SQLITE3_TEXT);
+        $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+        
+        $result = $stmt->execute();
+        
+        if ($result !== false) {
+            return json_encode([
+                'success' => true,
+                'message' => 'Record updated successfully',
+            ]);
+        } else {
+            return json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $this->db->conn->lastErrorMsg(),
+            ]);
+        }
+    }
+
+    public function getLatestSpeedTest($device_id)
+    {
+        $stmt = $this->db->conn->prepare(
+            "SELECT upload, download, latency, ping, country, latitude, longitude, isp, timestamp 
+            FROM devicelog 
+            WHERE device_id = :device_id 
+            ORDER BY timestamp DESC 
+            LIMIT 1"
+        );
+        $stmt->bindValue(':device_id', $device_id, SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        return $result ? $result->fetchArray(SQLITE3_ASSOC) : null;
     }
 
     public function deleteDevice($device_id)
@@ -288,6 +327,15 @@ class API
                         echo $this->deleteDevice($device_id);
                     } else {
                         echo json_encode(['success' => false, 'message' => 'Device ID not provided.']);
+                    }
+                    break;
+                case 'updateRecord':
+                    if (isset($_POST['id']) && isset($_POST['landmark'])) {
+                        $id = $_POST['id'];
+                        $landmark = $_POST['landmark'];
+                        echo $this->updateSpeedTestRecord($id, $landmark);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Missing parameters for updateRecord.']);
                     }
                     break;
                 default:

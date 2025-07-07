@@ -51,6 +51,7 @@ class Database
             latitude REAL,
             longitude REAL,
             isp TEXT,
+            landmark TEXT,
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
         )";
